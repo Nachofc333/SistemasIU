@@ -8,11 +8,13 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
   <link rel='stylesheet' href='style.css'>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
 
   <!-- Make sure you put this AFTER Leaflet's CSS -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
     integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin="">
-    </script>
+  </script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 
@@ -21,6 +23,7 @@
   <div id="mapid"></div>
     <input type="text" id="location" placeholder="Escribe una ubicación">
     <button onclick="addMarker()">Enviar</button>
+    <div id="distance">Distancia al marcador: </div>
     
   <script src="script.js">
 
