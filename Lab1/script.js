@@ -14,25 +14,43 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18
 }).addTo(mymap);
 
+let userMarker = null; // Variable para guardar el marcador del usuario
 let marker = null; // Variable para guardar el marcador actual
+let circle = null; // Variable para guardar el circulo actual
 let userLocation = null; // Variable para guardar la ubicación del usuario
 let routeControl = null; // Variable para guardar la ruta actual
 
 // Solicita la ubicación del usuario
-navigator.geolocation.getCurrentPosition(function(position) {
+navigator.geolocation.watchPosition(function(position) {
     userLocation = [position.coords.latitude, position.coords.longitude];
 
+    
+
+    if (userMarker) {
+        mymap.removeLayer(userMarker);
+    }
+
     // Añade un marcador para la ubicación del usuario
-    L.marker(userLocation).addTo(mymap).bindPopup('Tu ubicación').openPopup();
+
+    userMarker = L.marker(userLocation).addTo(mymap).bindPopup('Tu ubicación').openPopup();
 
     mymap.on('click', function(e) {
         // Si ya existe un marcador, lo eliminamos
         if (marker) {
             mymap.removeLayer(marker);
+            mymap.removeLayer(circle);
         }
 
         // Añade el nuevo marcador
         marker = L.marker(e.latlng, {icon: redIcon}).addTo(mymap);
+
+        //Circulo alrededor del marcador
+        circle = L.circle(e.latlng, {
+            color: 'grey',
+            fillColor: 'grey',
+            fillOpacity: 0.2,
+            radius: 200
+        }).addTo(mymap);
 
         // Calcula la distancia entre la ubicación del usuario y el marcador
         const distance = haversineDistance(userLocation[0], userLocation[1], e.latlng.lat, e.latlng.lng);
@@ -65,8 +83,32 @@ navigator.geolocation.getCurrentPosition(function(position) {
         routeControl.on('waypointschanged', function(e) {
             console.log('Puntos de ruta cambiados:', e.waypoints);
         });
+
+    
+        // Hacer vibrar el dispositivo en función de la distancia al marcador
+        let intervalId = setInterval(function() {
+            let distancia = mymap.distance(userLocation, marker.getLatLng());
+
+            console.log("Vibrando")
+
+            if (distancia < 50) {
+                navigator.vibrate([700,50,700]);
+                console.log("Vibrando 50"); 
+            }    
+            else if (distancia < 100) {
+                navigator.vibrate([500]);
+                console.log("Vibrando 100");
+            }
+            else if (distancia < 200) {
+                navigator.vibrate([200]);
+                console.log("Vibrando 200");
+            }
+        }, 1000); // Comprueba la distancia cada segundo
     });
 });
+
+
+
 
 // Función para calcular la distancia entre dos puntos utilizando la fórmula del haversine
 function haversineDistance(lat1, lon1, lat2, lon2) {
