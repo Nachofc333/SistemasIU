@@ -1,3 +1,4 @@
+// Define el icono rojo para los marcadores
 let redIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -7,46 +8,44 @@ let redIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
+// Crea el mapa y establece la vista
 const mymap = L.map('sample_map').setView([40.741, -3.884], 15);
 
+// Añade la capa de azulejos del mapa de OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
     maxZoom: 18
 }).addTo(mymap);
 
-let userMarker = null; // Variable para guardar el marcador del usuario
-let marker = null; // Variable para guardar el marcador actual
-let circle = null; // Variable para guardar el circulo actual
-let userLocation = null; // Variable para guardar la ubicación del usuario
-let routeControl = null; // Variable para guardar la ruta actual
+// Variables para guardar los marcadores, el círculo, la ubicación del usuario y el control de ruta
+let userMarker = null;
+let marker = null;
+let circle = null;
+let userLocation = null;
+let routeControl = null;
 
 // Solicita la ubicación del usuario
 navigator.geolocation.watchPosition(function(position) {
     userLocation = [position.coords.latitude, position.coords.longitude];
 
-    
-
+    // Elimina el marcador del usuario si ya existe
     if (userMarker) {
         mymap.removeLayer(userMarker);
     }
 
     // Añade un marcador para la ubicación del usuario
-
     userMarker = L.marker(userLocation).addTo(mymap).bindPopup('Tu ubicación').openPopup();
 
+    // Evento al hacer clic en el mapa
     mymap.on('click', function(e) {
-        // Si ya existe un marcador, lo eliminamos
+        // Elimina el marcador y el círculo anteriores si existen
         if (marker) {
-            console.log("Borrando marcador previo");
             mymap.removeLayer(marker);
             mymap.removeLayer(circle);
-
         }
 
-        // Añade el nuevo marcador
+        // Añade un nuevo marcador y círculo
         marker = L.marker(e.latlng, {icon: redIcon}).addTo(mymap);
-
-        //Circulo alrededor del marcador
         circle = L.circle(e.latlng, {
             color: 'grey',
             fillColor: 'grey',
@@ -57,14 +56,9 @@ navigator.geolocation.watchPosition(function(position) {
         // Calcula la distancia entre la ubicación del usuario y el marcador
         const distance = haversineDistance(userLocation[0], userLocation[1], e.latlng.lat, e.latlng.lng);
 
-        // Muestra la distancia en el elemento HTML
-        document.getElementById('distance').textContent = `Distancia al marcador: ${distance.toFixed(2)} metros`;
-
-        // Borra la ruta anterior si existe
-        if (routeControl) {
-            console.log("Borrando ruta previa");
-
-            mymap.removeControl(routeControl);
+        // Desactiva temporalmente el control de ruta
+        if (routeControl !== null && routeControl.getPlan() !== null) {
+            routeControl.getPlan().setWaypoints([]);
         }
 
         // Calcula la ruta utilizando OSRM y muestra en el mapa
@@ -78,43 +72,42 @@ navigator.geolocation.watchPosition(function(position) {
             lineOptions: {
                 styles: [{color: 'blue', opacity: 0.6, weight: 4}]
             }
-            
         }).addTo(mymap);
 
-        // Manejo de errores
+        // Manejo de errores de enrutamiento
         routeControl.on('routingerror', function(err) {
             console.error('Error en el enrutamiento:', err.error);
+            // Borra la ruta si hay un error
+            if (routeControl !== null) {
+                routeControl.getPlan().setWaypoints([]);
+            }
         });
 
+        // Evento cuando los puntos de ruta cambian
         routeControl.on('waypointschanged', function(e) {
             console.log('Puntos de ruta cambiados:', e.waypoints);
         });
 
-    
         // Hacer vibrar el dispositivo en función de la distancia al marcador
         let intervalId = setInterval(function() {
-            let distancia = mymap.distance(userLocation, marker.getLatLng());
+            if (marker !== null) {
+                let distancia = mymap.distance(userLocation, marker.getLatLng());
+                console.log("Vibrando");
 
-            console.log("Vibrando")
-
-            if (distancia < 50) {
-                navigator.vibrate([700,50,700]);
-                console.log("Vibrando 50"); 
-            }    
-            else if (distancia < 100) {
-                navigator.vibrate([500]);
-                console.log("Vibrando 100");
-            }
-            else if (distancia < 200) {
-                navigator.vibrate([200]);
-                console.log("Vibrando 200");
+                if (distancia < 50) {
+                    navigator.vibrate([700,50,700]);
+                    console.log("Vibrando 50");
+                } else if (distancia < 100) {
+                    navigator.vibrate([500]);
+                    console.log("Vibrando 100");
+                } else if (distancia < 200) {
+                    navigator.vibrate([200]);
+                    console.log("Vibrando 200");
+                }
             }
         }, 1000); // Comprueba la distancia cada segundo
     });
 });
-
-
-
 
 // Función para calcular la distancia entre dos puntos utilizando la fórmula del haversine
 function haversineDistance(lat1, lon1, lat2, lon2) {
