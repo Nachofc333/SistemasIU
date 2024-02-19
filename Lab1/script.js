@@ -37,8 +37,10 @@ navigator.geolocation.watchPosition(function(position) {
     mymap.on('click', function(e) {
         // Si ya existe un marcador, lo eliminamos
         if (marker) {
+            console.log("Borrando marcador previo");
             mymap.removeLayer(marker);
             mymap.removeLayer(circle);
+
         }
 
         // Añade el nuevo marcador
@@ -60,6 +62,8 @@ navigator.geolocation.watchPosition(function(position) {
 
         // Borra la ruta anterior si existe
         if (routeControl) {
+            console.log("Borrando ruta previa");
+
             mymap.removeControl(routeControl);
         }
 
@@ -69,10 +73,12 @@ navigator.geolocation.watchPosition(function(position) {
                 L.latLng(userLocation[0], userLocation[1]),
                 e.latlng
             ],
+            createMarker: function() { return null; },
             routeWhileDragging: true,
             lineOptions: {
                 styles: [{color: 'blue', opacity: 0.6, weight: 4}]
             }
+            
         }).addTo(mymap);
 
         // Manejo de errores
