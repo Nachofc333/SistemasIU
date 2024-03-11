@@ -1,0 +1,1 @@
+document.querySelector("#status").textContent = "Se ha cargado el fichero con el código JavaScript";
