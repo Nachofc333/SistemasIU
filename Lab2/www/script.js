@@ -60,6 +60,12 @@ const loadTasks = () => {
                     const taskItem = document.createElement("li");
                     taskItem.textContent = task.title;
                     taskListContainer.appendChild(taskItem);
+                    // addRemoveListener(taskItem);
+                    addDragListeners(taskItem);
+                    addToggleDoneListener(taskItem);
+
+                    // Cambia el estilo del elemento de la lista para indicar si la tarea está completada
+                    taskItem.style.textDecoration = task.done ? 'line-through' : 'none';
                 });
         })
         .catch(error => {
@@ -69,9 +75,9 @@ const loadTasks = () => {
 
 document.addEventListener('DOMContentLoaded', loadTasks);
 
+
 const add = () => {
-    const taskInput = document.querySelector("#task-input");
-    const taskTitle = taskInput.value.trim();
+    let taskTitle = document.getElementById('task-name').value.trim();
     
     if (taskTitle !== "") {
         const newTask = {
@@ -79,27 +85,115 @@ const add = () => {
             title: taskTitle,
             done: false
         };
-        
-        taskList.push(newTask);
-        
-        // Do something with the new task
-    }
     
-    taskInput.value = "";
+
+        taskList.push(newTask);
+            
+        
+        let taskListContainer = document.getElementById('task-list');
+        let taskItem = document.createElement('li');
+        taskItem.textContent = newTask.title;
+        taskListContainer.appendChild(taskItem);
+        // addRemoveListener(taskItem);
+        addDragListeners(taskItem);
+        addToggleDoneListener(taskItem);
+        vibrate();
+    }
+    else {
+        alert('Por favor, introduce el nombre de la tarea.');
+        return;
+    }
+    document.getElementById('task-name').value = '';
+    
+}
+const remove = function(event) {
+    // Obtiene el elemento de la lista que disparó el evento
+    let taskItem = event.target;
+
+    // Añade la clase 'fade-out' al elemento para iniciar la animación
+    taskItem.classList.add('slide-out-right');
+    // Espera 1 segundo (la duración de la animación) antes de eliminar la tarea
+    setTimeout(() => {
+        // Elimina la tarea de la lista de tareas
+        let taskId = taskList.findIndex(task => task.title === taskItem.textContent);
+        if (taskId !== -1) {
+            taskList.splice(taskId, 1);
+        }
+
+        // Elimina la tarea del HTML
+        taskItem.remove();
+        vibrate();
+    }, 500);
 }
 
-const remove = () => {
-    // Implement the logic to remove a task from the taskList array
+
+const toggleDone = function(event) {
+    // Obtiene el elemento de la lista que disparó el evento
+    let taskItem = event.target;
+
+    // Encuentra la tarea correspondiente en la lista de tareas
+    let task = taskList.find(task => task.title === taskItem.textContent);
+    if (task) {
+        // Cambia el estado de 'done' de la tarea
+        task.done = !task.done;
+        taskItem.style.textDecoration = task.done ? 'line-through' : 'none';
+        vibrate();
+        console.log(taskList);
+
+    }
 }
 
-const toggleDone = () => {
-    // Implement the logic to toggle the "done" property of a task in the taskList array
+const vibrate = () => {
+    // Comprueba si la API de vibración está disponible
+    if (navigator.vibrate) {
+        // Hace vibrar el dispositivo durante 200 milisegundos
+        navigator.vibrate(200);
+    }
+}
+
+
+const addDragListeners = (item) => {
+    item.draggable = true;
+    item.addEventListener('dragstart', function(event) {
+        event.dataTransfer.setData('text/plain', this.textContent);
+    });
+    item.addEventListener('dragend', function(event) {
+        if (event.screenX > window.innerWidth / 2) {
+            remove.call(this, event);
+        }
+    });
+}
+
+const addToggleDoneListener = (item) => {
+    let timerId;
+    item.addEventListener('mousedown', function(event) {
+        // Inicia un temporizador cuando se presiona el botón del ratón
+        timerId = setTimeout(() => toggleDone.call(this, event), 1000);
+    });
+    item.addEventListener('mouseup', function() {
+        // Detiene el temporizador cuando se suelta el botón del ratón
+        clearTimeout(timerId);
+    });
 }
 
 const addButton = document.querySelector("#fab-add");
 
+// const addRemoveListener = (item) => {
+//     item.addEventListener('click', remove);
+// }
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadTasks();
 
+    // Añade los event listeners a las tareas existentes
+    document.querySelectorAll('#task-list li').forEach(item => {
+        addDragListeners(item);
+        addToggleDoneListener(item);
+    });
+
+    // Añade el event listener al botón de añadir
+    document.getElementById('fab-add').addEventListener('click', add);
+});
 addButton.addEventListener("touchend", add);
 
 
